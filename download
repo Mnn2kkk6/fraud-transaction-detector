@@ -1,4 +1,2 @@
-MODEL_PATH=models/saved/fraud_model.pkl
-DATA_PATH=data/raw/creditcard.csv
-THRESHOLD=0.5
-DEBUG=True
+# Created by pytest automatically.
+*

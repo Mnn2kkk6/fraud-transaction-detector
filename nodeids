@@ -1,0 +1,15 @@
+[
+  "tests/test_api.py::test_dashboard_loads",
+  "tests/test_api.py::test_health_endpoint",
+  "tests/test_api.py::test_predict_fraud",
+  "tests/test_api.py::test_predict_missing_field",
+  "tests/test_api.py::test_predict_normal",
+  "tests/test_predict.py::test_add_features_columns",
+  "tests/test_predict.py::test_log_amount_positive",
+  "tests/test_predict.py::test_prediction_result_high",
+  "tests/test_predict.py::test_prediction_result_low",
+  "tests/test_predict.py::test_scale_features_shape",
+  "tests/test_predict.py::test_tiny_amount_flag",
+  "tests/test_predict.py::test_transaction_input_missing_field",
+  "tests/test_predict.py::test_transaction_input_valid"
+]
