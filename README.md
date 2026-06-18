@@ -64,31 +64,43 @@ Truy cập http://localhost:8000
 ```
 fraud_detection/
 ├── data/
-│   ├── raw/            ← creditcard.csv để đây
-│   └── processed/
+│   ├── raw/                    ← creditcard.csv (Kaggle dataset)
+│   └── processed/              ← Charts & processed outputs
+├── notebooks/
+│   ├── 01_eda.ipynb            ← Phân tích dữ liệu (EDA)
+│   └── 02_model_experiments.ipynb  ← So sánh RandomForest vs XGBoost
 ├── src/
+│   ├── __init__.py
 │   ├── data_processing/
-│   │   ├── loader.py
-│   │   ├── preprocessor.py
-│   │   └── feature_engineer.py
+│   │   ├── __init__.py
+│   │   ├── loader.py           ← Đọc & split dataset
+│   │   ├── preprocessor.py     ← Scale, SMOTE
+│   │   └── feature_engineer.py ← Tạo feature mới
 │   ├── models/
-│   │   ├── base_model.py
-│   │   ├── random_forest.py
-│   │   ├── xgboost_model.py
-│   │   └── evaluator.py
+│   │   ├── __init__.py
+│   │   ├── base_model.py       ← Abstract base class
+│   │   ├── random_forest.py    ← RF classifier
+│   │   ├── xgboost_model.py    ← XGBoost classifier
+│   │   └── evaluator.py        ← Metrics: Precision, Recall, AUC
 │   ├── api/
-│   │   ├── main.py
-│   │   ├── schemas.py
-│   │   └── predict.py
+│   │   ├── __init__.py
+│   │   ├── main.py             ← FastAPI app entry point
+│   │   ├── schemas.py          ← Pydantic request/response
+│   │   └── predict.py          ← Endpoint /predict
 │   └── utils/
-│       ├── config.py
-│       └── logger.py
+│       ├── __init__.py
+│       ├── config.py           ← Đọc .env, hằng số
+│       └── logger.py           ← Logging chuẩn
 ├── templates/
-│   └── index.html      ← Dashboard UI
+│   └── index.html              ← Dashboard UI
 ├── tests/
-├── train.py            ← Chạy để train model
+│   ├── test_predict.py         ← Unit tests
+│   └── test_api.py             ← API endpoint tests
+├── main.py                     ← Entry point (python main.py)
+├── train.py                    ← Script train & lưu model
+├── requirements.txt
 ├── .env
-└── requirements.txt
+└── README.md
 ```
 
 ## PyCharm Tips
