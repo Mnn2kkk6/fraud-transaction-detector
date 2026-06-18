@@ -185,7 +185,7 @@ Nhận thông tin giao dịch, trả về kết quả phân tích.
 
 ---
 
-## 🧪 Chạy tests
+##  Chạy tests
 
 ```bash
 # Chạy toàn bộ test
