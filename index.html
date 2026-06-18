@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fraud Detection Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+    header { background: #1a1d2e; border-bottom: 1px solid #2d3748; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 20px; font-weight: 600; color: #fff; }
+    .badge { background: #38a169; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 99px; }
+    main { max-width: 900px; margin: 40px auto; padding: 0 24px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .card { background: #1a1d2e; border: 1px solid #2d3748; border-radius: 12px; padding: 24px; }
+    .card h2 { font-size: 14px; color: #a0aec0; margin-bottom: 16px; text-transform: uppercase; letter-spacing: .05em; }
+    label { display: block; font-size: 13px; color: #a0aec0; margin-bottom: 4px; margin-top: 12px; }
+    input[type=number] { width: 100%; background: #0f1117; border: 1px solid #2d3748; border-radius: 6px; padding: 8px 12px; color: #e2e8f0; font-size: 14px; }
+    input:focus { outline: none; border-color: #4299e1; }
+    button { margin-top: 20px; width: 100%; padding: 12px; background: #3182ce; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    button:hover { background: #2b6cb0; }
+    #result { display: none; }
+    .result-label { font-size: 13px; color: #a0aec0; margin-bottom: 6px; }
+    .verdict { font-size: 32px; font-weight: 700; margin: 8px 0; }
+    .verdict.fraud { color: #fc8181; }
+    .verdict.safe  { color: #68d391; }
+    .prob-bar { background: #2d3748; border-radius: 99px; height: 10px; margin: 12px 0 4px; overflow: hidden; }
+    .prob-fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+    .risk-chip { display: inline-block; padding: 4px 14px; border-radius: 99px; font-size: 12px; font-weight: 600; margin-top: 12px; }
+    .risk-LOW    { background: #276749; color: #9ae6b4; }
+    .risk-MEDIUM { background: #744210; color: #fbd38d; }
+    .risk-HIGH   { background: #742a2a; color: #fc8181; }
+    .meta { font-size: 12px; color: #718096; margin-top: 16px; }
+    .spinner { display: none; text-align: center; color: #4299e1; margin-top: 16px; font-size: 13px; }
+  </style>
+</head>
+<body>
+<header>
+  <span style="font-size:22px">🛡️</span>
+  <h1>Fraud Detection Dashboard</h1>
+  <span class="badge">LIVE</span>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- Input form -->
+    <div class="card">
+      <h2>Nhập giao dịch</h2>
+      <label>Amount (VND / USD)</label>
+      <input type="number" id="Amount" placeholder="149.62" step="0.01" value="149.62"/>
+      <label>Time (giây từ giao dịch đầu tiên)</label>
+      <input type="number" id="Time" placeholder="0" value="0"/>
+      <label style="margin-top:16px; color:#718096; font-size:12px;">V1 – V28 (PCA features — dùng giá trị mẫu)</label>
+      <div id="v-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;"></div>
+      <button onclick="submitPrediction()">🔍 Phân tích giao dịch</button>
+      <div class="spinner" id="spinner">Đang phân tích...</div>
+    </div>
+
+    <!-- Result -->
+    <div class="card" id="result">
+      <h2>Kết quả phân tích</h2>
+      <div class="result-label">Phán quyết</div>
+      <div class="verdict" id="verdict-text"></div>
+      <div class="result-label" style="margin-top:16px;">Xác suất gian lận</div>
+      <div class="prob-bar"><div class="prob-fill" id="prob-fill"></div></div>
+      <div id="prob-text" style="font-size:13px;color:#a0aec0;"></div>
+      <div id="risk-chip" class="risk-chip"></div>
+      <div class="meta" id="meta"></div>
+    </div>
+
+    <!-- Placeholder khi chưa có kết quả -->
+    <div class="card" id="placeholder" style="display:flex;align-items:center;justify-content:center;min-height:260px;">
+      <div style="text-align:center;color:#4a5568;">
+        <div style="font-size:48px;margin-bottom:12px;">📊</div>
+        <div>Kết quả sẽ hiện ở đây</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const V_DEFAULTS = [-1.36,-0.07,2.53,1.38,-0.34,0.46,0.24,0.09,0.36,0.09,-0.55,-0.61,-0.99,-0.31,1.47,-0.47,0.21,0.02,0.40,0.25,-0.02,0.28,-0.11,0.07,0.13,-0.19,0.13,-0.02];
+
+const container = document.getElementById('v-fields');
+V_DEFAULTS.forEach((val, i) => {
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<label style="font-size:11px;color:#4a5568;margin:0 0 2px">V${i+1}</label>
+    <input type="number" id="V${i+1}" value="${val}" step="0.01" style="padding:6px 8px;font-size:12px;"/>`;
+  container.appendChild(wrap);
+});
+
+async function submitPrediction() {
+  const body = { Amount: parseFloat(document.getElementById('Amount').value), Time: parseFloat(document.getElementById('Time').value) };
+  for (let i = 1; i <= 28; i++) body[`V${i}`] = parseFloat(document.getElementById(`V${i}`).value);
+
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+
+  try {
+    const res = await fetch('/predict', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await res.json();
+    showResult(data);
+  } catch(e) {
+    alert('Lỗi kết nối API. Đảm bảo server đang chạy.');
+  } finally {
+    document.getElementById('spinner').style.display = 'none';
+  }
+}
+
+function showResult(data) {
+  document.getElementById('result').style.display = 'block';
+  const verdict = document.getElementById('verdict-text');
+  verdict.textContent = data.is_fraud ? '⚠️ GIAN LẬN' : '✅ HỢP LỆ';
+  verdict.className = 'verdict ' + (data.is_fraud ? 'fraud' : 'safe');
+
+  const pct = (data.fraud_probability * 100).toFixed(1);
+  document.getElementById('prob-text').textContent = `${pct}%`;
+  const fill = document.getElementById('prob-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = data.is_fraud ? '#fc8181' : '#68d391';
+
+  const chip = document.getElementById('risk-chip');
+  chip.textContent = 'Rủi ro: ' + data.risk_level;
+  chip.className = 'risk-chip risk-' + data.risk_level;
+
+  document.getElementById('meta').textContent = `Model: ${data.model_used}`;
+}
+</script>
+</body>
+</html>
